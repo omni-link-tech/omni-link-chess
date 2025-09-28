@@ -18,7 +18,7 @@ the Python helper modules fit together.
 
    ```bash
    git clone <this-repo-url>
-   cd chess3d
+   cd omni-link-chess
    ```
 
 2. **Install the JavaScript dependencies**
@@ -142,3 +142,4 @@ The bridge script glues the speech/command layer to the chess engine:
 
 Run `python chess_oapi/link.py` alongside the JavaScript stack to tie everything
 into the 3D board experience.
+
