@@ -5,6 +5,18 @@ visualisation with a lightweight Python controller. The instructions below walk
 through setting up the JavaScript + Python stack from scratch and explain how
 the Python helper modules fit together.
 
+## Omni Link Agent setup
+
+Main Task: 
+`You are a chess coach. You help users learn chess. You can play games with the users.`
+
+Available Commands:  
+`move_[color]_[piece]_from_[location1]_to_[location2],`
+
+Custom Instructions:
+`Commands are like: move_white_knight_from_a2_to_a3 
+You can execute move pieces using commands when playing with the users.`
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 18 or newer (the demo uses Vite and a small
@@ -62,26 +74,26 @@ the Python helper modules fit together.
    virtual environment if you created one):
 
    ```bash
-   python chess_oapi/link.py
+   python chess_link/link.py
    ```
 
    By default the bridge connects to an MQTT broker over WebSockets at
    `ws://localhost:9001`, subscribing to `olink/commands` and publishing
    feedback to `olink/commands_feedback`. You can override the broker host,
    port, transport, and topic names with the environment variables described in
-   `chess_oapi/oapi.py` (for example `MQTT_HOST`, `MQTT_PORT`, or
+   `chess_link/omnilink.py` (for example `MQTT_HOST`, `MQTT_PORT`, or
    `MQTT_COMMAND_TOPIC`).
 
 7. **Open the front end** at `http://localhost:5173` to view the 3D board. You
    can now drive moves via MQTT voice/command templates or directly from
    Python using the helper API below.
 
-## Python chess API (`chess_oapi/chess_api.py`)
+## Python chess API (`chess_link/chess_api.py`)
 
 Import the helper once the JavaScript and Python processes above are running:
 
 ```python
-from chess_oapi.chess_api import move_piece, get_context, register_move_listener
+from chess_link.chess_api import move_piece, get_context, register_move_listener
 ```
 
 The module targets the Node server at `http://localhost:8765` and provides the
@@ -105,25 +117,13 @@ Behind the scenes the module keeps small helper utilities for formatting context
 information (for example, converting the JSON board representation into natural
 language) so your integrations can display a readable snapshot of the board.
 
-### Understanding the `FEN:` line
-
-The context string broadcast by the JavaScript server typically contains a line
-that begins with `FEN:` followed by the board layout encoded in
-Forsyth–Edwards Notation. The string lists the ranks from Black's back row (rank
-8) to White's back row (rank 1), using slashes (`/`) as separators. Letters
-indicate pieces (`r`, `n`, `b`, `q`, `k`, `p` for black; uppercase for white) and
-digits represent consecutive empty squares. For example, the FEN string
-`rnbqkbnr/ppppp1pp/8/5p2/4P3/8/PPPP1PPP/RNBQKBNR` describes the standard starting
-position except that White has advanced the pawn from e2 to e4 and Black has
-moved the pawn from f7 to f5.
-
-## Omni Link bridge (`chess_oapi/link.py`)
+## Omni Link bridge (`chess_link/link.py`)
 
 The bridge script glues the speech/command layer to the chess engine:
 
 1. **Template compilation** — it loads the command patterns from
-   `chess_commands_oapi.txt` into an `OAPIEngine` using the shared `TypeRegistry`
-   from `oapi.py`. These templates describe natural-language or structured MQTT
+   `chess_commands_omnilink.txt` into an `OmniLinkEngine` using the shared `TypeRegistry`
+   from `omnilink.py`. These templates describe natural-language or structured MQTT
    commands such as `move [color] [piece] from [location1] to [location2]`.
 2. **Automatic context updates** — a listener registered via
    `register_move_listener` calls `give_context(get_context(full=True))` after
@@ -134,12 +134,11 @@ The bridge script glues the speech/command layer to the chess engine:
    squares, and delegates to `move_piece`. If the command is missing required
    fields it responds with `{"ack": False}` so the MQTT client knows the move
    failed; otherwise it returns `{"ack": True}`.
-4. **MQTT bridge** — `OAPIMQTTBridge(engine).loop_forever()` establishes a
+4. **MQTT bridge** — `OmniLinkMQTTBridge(engine).loop_forever()` establishes a
    connection to the broker (defaulting to WebSockets on localhost:9001) and
    continually processes commands. You can customise the broker and topics via
-   the environment variables handled by `OAPIMQTTBridge` (for example
+   the environment variables handled by `OmniLinkMQTTBridge` (for example
    `MQTT_TRANSPORT=classic` to use TCP instead of WebSockets).
 
-Run `python chess_oapi/link.py` alongside the JavaScript stack to tie everything
+Run `python chess_link/link.py` alongside the JavaScript stack to tie everything
 into the 3D board experience.
-
