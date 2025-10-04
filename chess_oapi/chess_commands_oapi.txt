@@ -1,1 +1,0 @@
-move_[color]_[piece]_from_[location1]_to_[location2]
